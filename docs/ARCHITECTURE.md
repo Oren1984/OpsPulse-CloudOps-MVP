@@ -11,7 +11,7 @@
 - **Prometheus** — scrapes the app; evaluates `monitoring/prometheus/alert_rules.yml`.
 - **Grafana** — auto-provisioned datasource + one dashboard.
 - **Helm chart** (`helm/opspulse`) — packages the app for Kubernetes.
-- **Terraform** (`terraform/`) — provisions the AWS environment the chart deploys into.
+- **Terraform** (`terraform/`) — defines the AWS architecture the chart can deploy into.
 - **GitHub Actions** — CI (`ci.yml`) and CD (`deploy.yml`).
 - **AI Incident Assistant** (`app/opspulse/ai/`) — pluggable backend
   (Bedrock / mock / deterministic fallback) behind one service function.
@@ -94,7 +94,7 @@ flowchart TB
 | Plain Prometheus pod annotations, no ServiceMonitor requirement | Avoids depending on the prometheus-operator CRDs (kept optional) | Slightly less "GitOps-native" than a ServiceMonitor-only design |
 | Single shared NAT gateway | Cost control for a POC | Reduced AZ-level fault tolerance for egress traffic |
 | Single-AZ RDS, no read replica | Cost control | No HA/failover for the database |
-| CI/CD deploy role trusts the whole repo, granted cluster-admin EKS access | Keeps the OIDC/Helm setup simple for a single-purpose demo cluster | Broader-than-ideal blast radius if the repo's CI were compromised — acceptable only because the cluster is single-purpose and isolated |
+| CI/CD deploy role is restricted to this repo and production env/main branch with namespace-scoped EKS access | Keeps the OIDC/Helm flow usable for demos while reducing blast radius | Still broader than a fully production-hardened least-privilege model |
 | CloudTrail: single-region, AWS-managed KMS key, 30-day S3 lifecycle | Cost/complexity control | Weaker long-term audit retention than a production trail |
 | Local Postgres integration test spins up a real Docker container | Real DB behavior for the one test that matters most, without requiring a permanently running DB | Test is skipped if Docker isn't available in the runner |
 
