@@ -1,0 +1,33 @@
+# Environments and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+app/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+terraform/*.tfplan
+terraform/crash.log
+
+# Node (if any tooling is added later)
+node_modules/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local artifacts
+*.log

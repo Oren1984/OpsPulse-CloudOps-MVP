@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "opspulse.fullname" . }}-config
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+data:
+  APP_ENV: {{ .Values.env.appEnv | quote }}
+  LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  DEMO_MODE_ENABLED: {{ .Values.env.demoModeEnabled | quote }}
+  AI_BACKEND: {{ .Values.env.aiBackend | quote }}
+  BEDROCK_MODEL_ID: {{ .Values.env.bedrockModelId | quote }}
+  AWS_REGION: {{ .Values.env.awsRegion | quote }}
+  DB_HOST: {{ .Values.database.host | quote }}
+  DB_PORT: {{ .Values.database.port | quote }}
+  DB_NAME: {{ .Values.database.name | quote }}

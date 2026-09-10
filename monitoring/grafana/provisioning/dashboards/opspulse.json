@@ -1,0 +1,129 @@
+{
+  "title": "OpsPulse Overview",
+  "uid": "opspulse-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(opspulse_http_requests_total[1m])) by (path)",
+          "legendFormat": "{{path}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP Error Rate (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "100 * sum(rate(opspulse_http_errors_total[1m])) / clamp_min(sum(rate(opspulse_http_requests_total[1m])), 1)",
+          "legendFormat": "error rate %"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "P95 Request Latency (s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(opspulse_http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Application Health",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 },
+      "targets": [{ "expr": "up{job=\"opspulse-app\"}" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "PostgreSQL Connectivity",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 },
+      "targets": [{ "expr": "opspulse_database_up" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Open Incidents",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 8 },
+      "targets": [{ "expr": "opspulse_incidents_open_total" }]
+    },
+    {
+      "id": 7,
+      "title": "Demo Failure Active",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 8 },
+      "targets": [{ "expr": "opspulse_demo_failure_active" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "NORMAL", "color": "green" }, "1": { "text": "FAILURE INJECTED", "color": "red" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Pod Restarts (last 15m) — Kubernetes only",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 14 },
+      "targets": [
+        { "expr": "increase(kube_pod_container_status_restarts_total{pod=~\"opspulse.*\"}[15m])" }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Pod CPU Usage — Kubernetes only",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 14 },
+      "targets": [
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"opspulse.*\"}[5m])) by (pod)" }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Pod Memory Usage — Kubernetes only",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 14 },
+      "targets": [
+        { "expr": "sum(container_memory_working_set_bytes{pod=~\"opspulse.*\"}) by (pod)" }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Build Info",
+      "type": "table",
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 21 },
+      "targets": [{ "expr": "opspulse_build_info" }]
+    }
+  ]
+}

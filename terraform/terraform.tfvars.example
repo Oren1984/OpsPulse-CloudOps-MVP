@@ -1,0 +1,5 @@
+# Copy to terraform.tfvars and adjust. Never commit terraform.tfvars or any
+# .tfstate file — both can contain sensitive infrastructure details.
+
+aws_region        = "us-east-1"
+github_repository = "your-github-org/OpsPulse-CloudOps-MVP"

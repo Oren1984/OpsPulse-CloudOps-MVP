@@ -1,0 +1,6 @@
+apiVersion: v2
+name: opspulse
+description: OpsPulse — POC/MVP cloud-ops demo application Helm chart. Not production-ready.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

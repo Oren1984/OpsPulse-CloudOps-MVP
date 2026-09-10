@@ -1,0 +1,53 @@
+groups:
+  - name: opspulse-alerts
+    rules:
+      - alert: OpsPulseHighErrorRate
+        expr: |
+          (
+            sum(rate(opspulse_http_errors_total[2m]))
+            /
+            clamp_min(sum(rate(opspulse_http_requests_total[2m])), 1)
+          ) > 0.20
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpsPulse HTTP error rate above 20%"
+          description: "5xx error ratio has exceeded 20% for more than 1 minute."
+
+      - alert: OpsPulseHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(opspulse_http_request_duration_seconds_bucket[5m])) by (le)) > 0.75
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OpsPulse P95 latency above 750ms"
+          description: "P95 request latency has exceeded 750ms for more than 2 minutes."
+
+      - alert: OpsPulseApplicationUnavailable
+        expr: up{job="opspulse-app"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpsPulse application is unreachable"
+          description: "Prometheus cannot scrape the opspulse-app target."
+
+      - alert: OpsPulsePostgresUnavailable
+        expr: opspulse_database_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpsPulse cannot reach PostgreSQL"
+          description: "The application's readiness check reports the database as unreachable."
+
+      - alert: OpsPulsePodRestartingRepeatedly
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"opspulse.*"}[15m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OpsPulse pod restarting repeatedly"
+          description: "An opspulse pod has restarted more than 3 times in 15 minutes. Requires kube-state-metrics in the Kubernetes environment; not observable in local docker-compose."

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>OpsPulse</title>
+  <style>
+    body { font-family: -apple-system, Segoe UI, Arial, sans-serif; margin: 2rem; background: #0b0f14; color: #e6edf3; }
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    .muted { color: #8b949e; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #21262d; }
+    th { color: #8b949e; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+    .badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .healthy { background: #1a7f37; color: #fff; }
+    .degraded { background: #9a6700; color: #fff; }
+    .down { background: #cf222e; color: #fff; }
+    .unknown { background: #30363d; color: #c9d1d9; }
+    .low { color: #58a6ff; }
+    .medium { color: #d29922; }
+    .high { color: #f85149; }
+    .critical { color: #f85149; font-weight: 700; }
+    a { color: #58a6ff; }
+    .links { margin-top: 1rem; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>OpsPulse</h1>
+  <p class="muted">POC/MVP cloud-ops dashboard — not for production use.</p>
+
+  <h2>Services</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Status</th><th>Endpoint</th><th>Updated</th></tr></thead>
+    <tbody>
+      {% for s in services %}
+      <tr>
+        <td>{{ s.name }}</td>
+        <td><span class="badge {{ s.status.value }}">{{ s.status.value }}</span></td>
+        <td>{{ s.endpoint_url or "-" }}</td>
+        <td>{{ s.updated_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No services yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Recent Incidents</h2>
+  <table>
+    <thead><tr><th>Title</th><th>Severity</th><th>Status</th><th>Created</th></tr></thead>
+    <tbody>
+      {% for i in incidents %}
+      <tr>
+        <td>{{ i.title }}</td>
+        <td class="{{ i.severity.value }}">{{ i.severity.value }}</td>
+        <td>{{ i.status.value }}</td>
+        <td>{{ i.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No incidents recorded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="links">
+    <a href="/docs">API docs</a> &middot;
+    <a href="/metrics">Prometheus metrics</a> &middot;
+    <a href="/readyz">Readiness</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+OpsPulse has been deployed (release: {{ .Release.Name }}, namespace: {{ .Release.Namespace }}).
+
+This chart references an existing Kubernetes Secret ({{ .Values.database.existingSecret }})
+for database credentials. Create it before installing if you have not already:
+
+  kubectl create secret generic {{ .Values.database.existingSecret }} \
+    --from-literal=username=<db-user> \
+    --from-literal=password=<db-password>
+
+Check rollout status:
+  kubectl rollout status deployment/{{ include "opspulse.fullname" . }}
+
+Port-forward to access locally:
+  kubectl port-forward svc/{{ include "opspulse.fullname" . }} 8080:{{ .Values.service.port }}
+
+This is a POC/MVP deployment and is not production-ready.

@@ -1,0 +1,88 @@
+replicaCount: 2
+
+image:
+  repository: ""  # set to <account>.dkr.ecr.<region>.amazonaws.com/opspulse
+  tag: ""         # set to the Git commit SHA in CI/CD
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: false
+  className: "alb"
+  annotations: {}
+  host: ""
+  path: /
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+probes:
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readiness:
+    path: /readyz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+env:
+  appEnv: production
+  logLevel: INFO
+  demoModeEnabled: "false"
+  aiBackend: fallback
+  bedrockModelId: anthropic.claude-3-haiku-20240307-v1:0
+  awsRegion: us-east-1
+
+# Non-sensitive database connection parameters. Credentials come from
+# `database.existingSecret` — this chart never accepts a plaintext
+# password via values.
+database:
+  host: ""
+  port: 5432
+  name: opspulse
+  existingSecret: opspulse-db-credentials
+  secretUsernameKey: username
+  secretPasswordKey: password
+
+metrics:
+  path: /metrics
+  port: 8000
+  # Plain pod annotations for Prometheus discovery. A ServiceMonitor is
+  # deliberately not required, to avoid depending on the prometheus-operator
+  # CRDs in this lean POC. Set serviceMonitor.enabled if your cluster has it.
+  podAnnotations: true
+  serviceMonitor:
+    enabled: false
+    interval: 15s
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

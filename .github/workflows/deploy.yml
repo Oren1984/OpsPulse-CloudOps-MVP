@@ -1,0 +1,122 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "helm/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write # required for GitHub OIDC -> AWS
+  contents: read
+
+concurrency:
+  group: deploy-opspulse
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: opspulse
+  EKS_CLUSTER_NAME: opspulse-poc-eks
+  HELM_RELEASE: opspulse
+  HELM_NAMESPACE: opspulse
+  # Set to the AWS account's GitHub Actions deploy role ARN (Terraform output
+  # `github_actions_deploy_role_arn`) via a repository variable.
+  DEPLOY_ROLE_ARN: ${{ vars.DEPLOY_ROLE_ARN }}
+
+jobs:
+  build-and-push:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image metadata
+        id: meta
+        run: echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          IMAGE="$REGISTRY/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.sha }}"
+          docker build -t "$IMAGE" -f app/Dockerfile app
+          docker push "$IMAGE"
+
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: "v3.16.3"
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Record previous revision for rollback
+        id: previous
+        run: |
+          REV=$(helm history ${{ env.HELM_RELEASE }} -n ${{ env.HELM_NAMESPACE }} --max 1 -o json 2>/dev/null | jq -r '.[0].revision // "0"')
+          echo "revision=$REV" >> "$GITHUB_OUTPUT"
+
+      - name: Helm upgrade --install
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE }} helm/opspulse \
+            --namespace ${{ env.HELM_NAMESPACE }} --create-namespace \
+            --set image.repository="$REGISTRY/${{ env.ECR_REPOSITORY }}" \
+            --set image.tag="${{ needs.build-and-push.outputs.image_tag }}" \
+            --wait --timeout 5m
+
+      - name: Wait for rollout
+        id: rollout
+        run: |
+          kubectl rollout status deployment/${{ env.HELM_RELEASE }}-opspulse \
+            -n ${{ env.HELM_NAMESPACE }} --timeout=180s
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          kubectl run opspulse-smoke-${{ github.run_id }} \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            --image=curlimages/curl:8.11.1 --restart=Never --rm -i \
+            --command -- sh -c \
+            "curl -sf http://${{ env.HELM_RELEASE }}-opspulse/healthz && curl -sf http://${{ env.HELM_RELEASE }}-opspulse/readyz"
+
+      - name: Rollback on failure
+        if: failure() && steps.previous.outputs.revision != '0'
+        run: |
+          echo "Deployment or smoke test failed — rolling back to revision ${{ steps.previous.outputs.revision }}"
+          helm rollback ${{ env.HELM_RELEASE }} ${{ steps.previous.outputs.revision }} \
+            -n ${{ env.HELM_NAMESPACE }} --wait --timeout 5m
