@@ -20,6 +20,7 @@ jobs:
   test:
     name: Lint & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16.6-alpine
@@ -64,6 +65,7 @@ jobs:
   docker:
     name: Build, Scan & Verify Image
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: test
     steps:
       - uses: actions/checkout@v4
@@ -77,14 +79,14 @@ jobs:
           scan-type: fs
           scan-ref: app
           severity: HIGH,CRITICAL
-          exit-code: "0"
+          exit-code: "1"
 
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:ci
           severity: HIGH,CRITICAL
-          exit-code: "0"
+          exit-code: "1"
           format: table
 
       - name: Verify non-root user
@@ -96,6 +98,7 @@ jobs:
   terraform:
     name: Terraform fmt & validate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: terraform
@@ -118,6 +121,7 @@ jobs:
   helm:
     name: Helm lint & template
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
