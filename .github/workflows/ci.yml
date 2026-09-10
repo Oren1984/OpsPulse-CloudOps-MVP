@@ -93,7 +93,7 @@ jobs:
 
       - name: Verify non-root user
         run: |
-          USER_OUT=$(docker run --rm ${{ env.IMAGE_NAME }}:ci whoami)
+          USER_OUT=$(docker run --rm --entrypoint whoami ${{ env.IMAGE_NAME }}:ci)
           echo "Container user: $USER_OUT"
           test "$USER_OUT" = "opspulse"
 
