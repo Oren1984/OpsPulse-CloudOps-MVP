@@ -18,17 +18,17 @@ module "ecr" {
 module "eks" {
   source = "./modules/eks"
 
-  name_prefix              = local.name_prefix
-  kubernetes_version       = var.kubernetes_version
-  vpc_id                   = module.vpc.vpc_id
-  private_subnet_ids       = module.vpc.private_subnet_ids
-  endpoint_public_access   = var.eks_endpoint_public_access
-  public_access_cidrs      = var.eks_public_access_cidrs
-  node_instance_types      = var.node_instance_types
-  node_desired_size        = var.node_desired_size
-  node_min_size            = var.node_min_size
-  node_max_size            = var.node_max_size
-  tags                     = local.common_tags
+  name_prefix            = local.name_prefix
+  kubernetes_version     = var.kubernetes_version
+  vpc_id                 = module.vpc.vpc_id
+  private_subnet_ids     = module.vpc.private_subnet_ids
+  endpoint_public_access = var.eks_endpoint_public_access
+  public_access_cidrs    = var.eks_public_access_cidrs
+  node_instance_types    = var.node_instance_types
+  node_desired_size      = var.node_desired_size
+  node_min_size          = var.node_min_size
+  node_max_size          = var.node_max_size
+  tags                   = local.common_tags
 }
 
 module "rds" {

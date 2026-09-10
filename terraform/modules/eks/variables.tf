@@ -31,7 +31,7 @@ variable "public_access_cidrs" {
   }
 
   validation {
-    condition = !var.endpoint_public_access || length(var.public_access_cidrs) > 0
+    condition     = !var.endpoint_public_access || length(var.public_access_cidrs) > 0
     error_message = "If endpoint_public_access is true, public_access_cidrs must contain at least one approved CIDR."
   }
 }
