@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("AI_BACKEND", "mock")
 os.environ.setdefault("DEMO_MODE_ENABLED", "true")
+os.environ.setdefault("API_KEY", "test-api-key")
 
 import pytest
 import pytest_asyncio

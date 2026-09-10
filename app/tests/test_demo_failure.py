@@ -10,12 +10,12 @@ async def test_demo_status_defaults_inactive(client):
 
 
 async def test_trigger_and_restore_demo_failure(client):
-    trigger = await client.post("/api/demo/fail")
+    trigger = await client.post("/api/demo/fail", headers={"X-API-Key": "test-api-key"})
     assert trigger.status_code == 200
     assert trigger.json()["demo_failure_active"] is True
     assert demo_failure_state.active is True
 
-    restore = await client.post("/api/demo/restore")
+    restore = await client.post("/api/demo/restore", headers={"X-API-Key": "test-api-key"})
     assert restore.status_code == 200
     assert restore.json()["demo_failure_active"] is False
     assert demo_failure_state.active is False
@@ -25,5 +25,5 @@ async def test_demo_disabled_returns_403(client, monkeypatch):
     from opspulse.config import settings
 
     monkeypatch.setattr(settings, "demo_mode_enabled", False)
-    resp = await client.post("/api/demo/fail")
+    resp = await client.post("/api/demo/fail", headers={"X-API-Key": "test-api-key"})
     assert resp.status_code == 403

@@ -10,9 +10,9 @@ resource "aws_iam_openid_connect_provider" "github" {
   tags = var.tags
 }
 
-# POC compromise: trust is scoped to the repository but not to a specific
-# branch/environment, so any workflow in this repo (any branch, PRs
-# included) can assume this role. Documented in docs/ARCHITECTURE.md.
+# Restrict GitHub Actions to this repository and the protected production
+# environment or the main branch only. This keeps the demo deployment scoped
+# to the approved workflow while still allowing the GitHub Environment flow.
 resource "aws_iam_role" "github_actions_deploy" {
   name = "${var.name_prefix}-github-actions-deploy"
 
@@ -27,7 +27,10 @@ resource "aws_iam_role" "github_actions_deploy" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:*"
+          "token.actions.githubusercontent.com:sub" = [
+            "repo:${var.github_repository}:environment:production",
+            "repo:${var.github_repository}:ref:refs/heads/main",
+          ]
         }
       }
     }]

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     database_url: str = "postgresql+asyncpg://opspulse:opspulse@localhost:5432/opspulse"
+    api_key: str = "change-me-demo-key"
 
     # Demo-failure mechanism is a deliberate, reversible feature-flagged fault
     # injector for the demo scenario. It must never be reachable in "production".

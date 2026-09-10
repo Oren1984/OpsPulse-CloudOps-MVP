@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from opspulse.auth import require_api_key
 from opspulse.config import settings
 from opspulse.demo_state import demo_failure_state
 
@@ -15,7 +16,7 @@ def _require_demo_mode() -> None:
 
 
 @router.post("/fail")
-async def trigger_demo_failure() -> dict:
+async def trigger_demo_failure(_: str = Depends(require_api_key)) -> dict:
     """Trigger a controlled, reversible demo failure. Dev/demo only."""
     _require_demo_mode()
     demo_failure_state.trigger()
@@ -23,7 +24,7 @@ async def trigger_demo_failure() -> dict:
 
 
 @router.post("/restore")
-async def restore_demo_failure() -> dict:
+async def restore_demo_failure(_: str = Depends(require_api_key)) -> dict:
     """Restore the system from the controlled demo failure."""
     _require_demo_mode()
     demo_failure_state.restore()

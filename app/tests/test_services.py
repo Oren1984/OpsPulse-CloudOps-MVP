@@ -1,6 +1,6 @@
 async def test_create_and_list_service(client):
     payload = {"name": "test-svc", "description": "demo", "endpoint_url": "http://x/health"}
-    create_resp = await client.post("/api/services", json=payload)
+    create_resp = await client.post("/api/services", json=payload, headers={"X-API-Key": "test-api-key"})
     assert create_resp.status_code == 201
     created = create_resp.json()
     assert created["name"] == "test-svc"
@@ -18,19 +18,23 @@ async def test_get_missing_service_404(client):
 
 
 async def test_update_service_status(client):
-    create_resp = await client.post("/api/services", json={"name": "svc-2"})
+    create_resp = await client.post("/api/services", json={"name": "svc-2"}, headers={"X-API-Key": "test-api-key"})
     service_id = create_resp.json()["id"]
 
-    patch_resp = await client.patch(f"/api/services/{service_id}", json={"status": "degraded"})
+    patch_resp = await client.patch(
+        f"/api/services/{service_id}",
+        json={"status": "degraded"},
+        headers={"X-API-Key": "test-api-key"},
+    )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["status"] == "degraded"
 
 
 async def test_delete_service(client):
-    create_resp = await client.post("/api/services", json={"name": "svc-3"})
+    create_resp = await client.post("/api/services", json={"name": "svc-3"}, headers={"X-API-Key": "test-api-key"})
     service_id = create_resp.json()["id"]
 
-    delete_resp = await client.delete(f"/api/services/{service_id}")
+    delete_resp = await client.delete(f"/api/services/{service_id}", headers={"X-API-Key": "test-api-key"})
     assert delete_resp.status_code == 204
 
     get_resp = await client.get(f"/api/services/{service_id}")

@@ -119,8 +119,9 @@ and validated (`terraform validate` passes; see `docs/ARCHITECTURE.md`).
 ### GitHub OIDC setup
 
 Terraform's `iam-oidc` module creates the GitHub OIDC provider and a deploy
-role trusted for `repo:<your-org>/<your-repo>:*`. After `terraform apply`,
-set the `DEPLOY_ROLE_ARN` repository variable in GitHub to the
+role restricted to the repository and either the `production` GitHub
+environment or the `main` branch. After `terraform apply`, set the
+`DEPLOY_ROLE_ARN` repository variable in GitHub to the
 `github_actions_deploy_role_arn` Terraform output, and set
 `github_repository` in `terraform.tfvars` to your actual "org/repo" before
 applying. No long-lived AWS access keys are used anywhere in CI/CD.
@@ -196,9 +197,9 @@ terraform destroy
 
 - Single AZ for RDS, one shared NAT gateway, no multi-region/multi-account —
   all deliberate POC cost/complexity trade-offs (see `docs/ARCHITECTURE.md`).
-- The GitHub Actions deploy role trusts the whole repository (any branch),
-  not just `main`, and is granted cluster-admin-equivalent EKS access —
-  acceptable for a single-purpose demo cluster, not for a shared one.
+- The GitHub Actions deploy role is scoped to the approved repository and
+  either the `production` environment or `main`, and EKS access is limited to
+  the `opspulse` namespace instead of cluster-wide admin rights.
 - CloudTrail is single-region with no KMS CMK and a short retention window.
 - No live AWS or Bedrock verification was performed in this build
   environment — see the relevant sections above for exactly what was and

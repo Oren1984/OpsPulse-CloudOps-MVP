@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from opspulse.auth import require_api_key
 from opspulse.db.models import Incident, IncidentStatus, Service
 from opspulse.db.session import get_db
 from opspulse.metrics import INCIDENTS_TOTAL
@@ -27,7 +28,11 @@ async def list_incidents(db: AsyncSession = Depends(get_db)) -> list[Incident]:
 
 
 @router.post("", response_model=IncidentOut, status_code=201)
-async def create_incident(payload: IncidentCreate, db: AsyncSession = Depends(get_db)) -> Incident:
+async def create_incident(
+    payload: IncidentCreate,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_api_key),
+) -> Incident:
     service = await db.get(Service, payload.service_id)
     if service is None:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -50,7 +55,10 @@ async def get_incident(incident_id: uuid.UUID, db: AsyncSession = Depends(get_db
 
 @router.patch("/{incident_id}", response_model=IncidentOut)
 async def update_incident(
-    incident_id: uuid.UUID, payload: IncidentUpdate, db: AsyncSession = Depends(get_db)
+    incident_id: uuid.UUID,
+    payload: IncidentUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_api_key),
 ) -> Incident:
     incident = await db.get(Incident, incident_id)
     if incident is None:

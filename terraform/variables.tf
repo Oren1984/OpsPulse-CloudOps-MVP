@@ -97,7 +97,26 @@ variable "db_engine_version" {
 variable "github_repository" {
   description = "GitHub \"org/repo\" allowed to assume the CI/CD deployment role via OIDC."
   type        = string
-  default     = "your-github-org/OpsPulse-CloudOps-MVP"
+  default     = "Oren1984/OpsPulse-CloudOps-MVP"
+}
+
+variable "eks_endpoint_public_access" {
+  description = "Whether to enable public EKS API access. Keep this disabled by default for a POC behind private networking."
+  type        = bool
+  default     = false
+}
+
+variable "eks_public_access_cidrs" {
+  description = "Approved CIDR ranges allowed to reach the public EKS API endpoint when public access is enabled. Must never include 0.0.0.0/0."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for cidr in var.eks_public_access_cidrs : cidr != "0.0.0.0/0"
+    ])
+    error_message = "eks_public_access_cidrs must not include 0.0.0.0/0. Use a restricted allowlist only."
+  }
 }
 
 variable "cloudtrail_log_retention_days" {

@@ -26,10 +26,12 @@ PostgreSQL connectivity, open incidents — all live.
 ## 3. Trigger the controlled demo failure (30s)
 
 ```bash
-curl -s -X POST http://localhost:8080/api/demo/fail
+curl -s -X POST http://localhost:8080/api/demo/fail \
+  -H "X-API-Key: ${API_KEY:-change-me-demo-key}"
 ```
 Explain: this is a deliberate, reversible fault injector, gated behind
-`DEMO_MODE_ENABLED` (off by default in the Helm chart / any real deployment).
+`DEMO_MODE_ENABLED` (off by default in the Helm chart / any real deployment),
+and protected by the same `X-API-Key` requirement used by write operations.
 
 ## 4. Observe changed metrics and an alert (60s)
 
@@ -58,6 +60,7 @@ Refresh the dashboard — the new incident appears in the feed.
 ```bash
 curl -s -X POST http://localhost:8080/api/ai/analyze \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: ${API_KEY:-change-me-demo-key}" \
   -d '{
     "alert": {"name": "HighErrorRate", "severity": "critical", "description": "5xx spike on opspulse-api"},
     "metrics": [{"name": "error_rate", "value": 42.0, "unit": "%"}],
@@ -76,7 +79,8 @@ no commands are ever executed, no infrastructure is ever changed.
 ## 8. Restore the service (15s)
 
 ```bash
-curl -s -X POST http://localhost:8080/api/demo/restore
+curl -s -X POST http://localhost:8080/api/demo/restore \
+  -H "X-API-Key: ${API_KEY:-change-me-demo-key}"
 ```
 
 ## 9. Confirm health and metrics recover (30s)
