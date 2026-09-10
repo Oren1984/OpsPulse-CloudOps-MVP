@@ -22,5 +22,7 @@ async def dashboard(request: Request, db: AsyncSession = Depends(get_db)) -> HTM
         .all()
     )
     return templates.TemplateResponse(
-        "dashboard.html", {"request": request, "services": services, "incidents": incidents}
+        request,
+        "dashboard.html",
+        {"services": services, "incidents": incidents},
     )
