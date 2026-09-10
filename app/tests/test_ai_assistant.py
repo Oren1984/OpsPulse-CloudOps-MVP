@@ -81,6 +81,7 @@ async def test_ai_analyze_endpoint_returns_structured_response(client):
             "log_excerpt": "slow query on incidents table",
             "deployment": {"service_name": "opspulse-api", "version": "abc123", "environment": "development"},
         },
+        headers={"X-API-Key": "test-api-key"},
     )
     assert resp.status_code == 200
     body = resp.json()
