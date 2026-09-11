@@ -86,6 +86,28 @@ In a typical five-minute walkthrough, you start the stack, confirm healthy servi
 
 Full presenter script, timing, and command-by-command demo flow are in docs/DEMO_GUIDE.md.
 
+## CI/CD pipeline
+
+The `CI` workflow (`.github/workflows/ci.yml`) runs on every push and pull
+request to `main` and must pass green:
+
+- **Lint & Test** — `ruff check`, Alembic migrations, and the pytest suite
+  against a real Postgres service container.
+- **Build, Scan & Verify Image** — builds the Docker image, runs two Trivy
+  scans (filesystem and image, `HIGH`/`CRITICAL` severity only, unfixed
+  findings ignored), and verifies the container runs as the non-root
+  `opspulse` user.
+- **Terraform fmt & validate** — formatting and validation with no backend.
+- **Helm lint & template** — chart lint and template rendering with sample
+  values.
+
+The `Deploy` workflow (`.github/workflows/deploy.yml`) runs after a
+successful `CI` run on `main` (or via manual dispatch), but only executes
+when a `DEPLOY_ROLE_ARN` repository variable is configured with a real AWS
+OIDC deploy role. Without it, the workflow skips cleanly instead of failing
+— this repo ships without live AWS infrastructure attached, so Deploy is
+inactive by design until that variable is set.
+
 ## AWS and Terraform status
 
 OpsPulse includes a Terraform-defined AWS architecture for ECR, EKS, networking, IAM OIDC trust, observability components, and RDS-aligned deployment structure.

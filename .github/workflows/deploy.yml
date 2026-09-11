@@ -28,7 +28,7 @@ jobs:
   build-and-push:
     name: Build & Push Image
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && vars.DEPLOY_ROLE_ARN != '' }}
     timeout-minutes: 20
     outputs:
       image_tag: ${{ steps.meta.outputs.sha }}
@@ -38,14 +38,6 @@ jobs:
       - name: Set image metadata
         id: meta
         run: echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Validate deploy configuration
-        shell: bash
-        run: |
-          if [ -z "${{ env.DEPLOY_ROLE_ARN }}" ]; then
-            echo "::error::DEPLOY_ROLE_ARN is not set. Add the GitHub Actions deploy role ARN as a repository variable."
-            exit 1
-          fi
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
@@ -73,14 +65,6 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v4
-
-      - name: Validate deploy configuration
-        shell: bash
-        run: |
-          if [ -z "${{ env.DEPLOY_ROLE_ARN }}" ]; then
-            echo "::error::DEPLOY_ROLE_ARN is not set. Add the GitHub Actions deploy role ARN as a repository variable."
-            exit 1
-          fi
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
